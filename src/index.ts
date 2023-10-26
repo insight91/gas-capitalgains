@@ -19,7 +19,7 @@ function onOpen() {
   calculateCG_(null);
 
   // Add Menu Option
-  SpreadsheetApp.getUi().createMenu('Email').addItem('Calculate CG', 'calculateCG_').addToUi();
+  SpreadsheetApp.getUi().createMenu('Calculate').addItem('Calculate CG', 'calculateCG_').addToUi();
 }
 
 function createTimeDrivenTrigger() {
