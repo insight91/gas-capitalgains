@@ -1,0 +1,21 @@
+{
+  "compileOnSave": true,
+  "include": ["src"],
+  "files": ["src/appsscript.json"],
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": false,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "resolveJsonModule": true,
+    "baseUrl": "./",
+    "outDir": "dist",
+    "module": "esnext",
+    "target": "es2015",
+    "typeRoots": ["node_modules/@types", "google-apps-script"],
+    "lib": ["esnext", "ESNext.Array"]
+  }
+}
