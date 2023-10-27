@@ -3,3 +3,7 @@
 gas-include/*
 node_modules
 dist
+
+# for running scripts from the command line
+creds.json
+.clasprc.json

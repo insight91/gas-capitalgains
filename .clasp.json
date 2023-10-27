@@ -1,5 +1,6 @@
 {
   "scriptId": "1qhTrKQQCCgLW5qYZ_0DjFxOFSXb39a90qgWD-GkaEUZBrwe5Uy3SU2jH",
   "rootDir": "dist/",
-  "filePushOrder": ["index.js"]
+  "filePushOrder": ["index.js"],
+  "projectId": "capital-gains-403223"
 }

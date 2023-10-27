@@ -4,32 +4,26 @@ const props = PropertiesService.getDocumentProperties();
 const TIMED_TK = 'ontime_calculateCG';
 const EDIT_TK = 'onedit_calculateCG';
 
-/**
- * Main function  https://developers.google.com/apps-script/guides/typescript
- * CLASP cli - https://github.com/google/clasp
- * Examples & ready slns - https://github.com/gsuitedevs/solutions/tree/master
- */
-
 function onOpen() {
-  // not required
-  // createTimeDrivenTrigger();
-  // createEditTrigger();
-
   // Calc on open
-  calculateCG_(null);
+  calculateCG(null);
 
   // Add Menu Option
-  SpreadsheetApp.getUi().createMenu('Calculate').addItem('Calculate CG', 'calculateCG_').addToUi();
+  SpreadsheetApp.getUi().createMenu('Calculate').addItem('Calculate CG', 'calculateCG').addToUi();
 }
+
+// not required for this project
+// createTimeDrivenTrigger();
+// createEditTrigger();
 
 function createTimeDrivenTrigger() {
   const p = props.getProperty(TIMED_TK);
   if (p) return;
 
-  const tb = ScriptApp.newTrigger('calculateCG_').timeBased().everyMinutes(1).create();
+  const tb = ScriptApp.newTrigger('calculateCG').timeBased().everyMinutes(1).create();
   const id = tb.getUniqueId();
   props.setProperties({ [TIMED_TK]: id });
-  Logger.log('[trigger] timedriven add new to mailchimp 1m', id);
+  Logger.log('[trigger] timedriven calculate CG', id);
 }
 
 function createEditTrigger() {
@@ -40,7 +34,7 @@ function createEditTrigger() {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   const onEditT = ScriptApp.newTrigger('onCellEdit_').forSpreadsheet(spreadsheet).onEdit().create();
   const id = onEditT.getUniqueId();
-  Logger.log('[trigger] oneditcell add to mailchimp', id);
+  Logger.log('[trigger] oneditcell', id);
   props.setProperties({ [EDIT_TK]: id });
 }
 
@@ -54,3 +48,9 @@ function deleteTrigger(triggerId: string) {
     }
   }
 }
+
+/**
+ * ARCHIVED CODE
+ */
+// var data = sheet.getDataRange().getValues();
+// for (var i = 1; i < data.length; i++) {

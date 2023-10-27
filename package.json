@@ -6,8 +6,8 @@
   "scripts": {
     "serve": "tsc  --project tsconfig.json --watch",
     "build": "tsc  --project tsconfig.json",
-    "publish": "gas push",
-    "publish:clasp": "clasp push  --watch",
+    "publish": "clasp push",
+    "publish:watch": "clasp push  --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {},
