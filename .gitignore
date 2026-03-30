@@ -8,6 +8,9 @@ dist
 creds.json
 .clasprc.json
 
+# Coverage output
+coverage/
+
 # Ignore test data
 /test-data
 /Stake -*
