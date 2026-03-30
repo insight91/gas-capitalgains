@@ -1,7 +1,7 @@
 {
-  "name": "gas-waitlist",
+  "name": "gas-capital-gains",
   "version": "1.0.0",
-  "description": "app script to send emails and add subscribers from sheets",
+  "description": "calculates capital gains from sheets",
   "main": "dist/index.js",
   "scripts": {
     "serve": "tsc  --project tsconfig.json --watch",
@@ -21,5 +21,13 @@
     "typescript": "^3.9.7"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "prettier": {
+    "printWidth": 140,
+    "singleQuote": true,
+    "useTabs": false,
+    "endOfLine": "lf",
+    "tabWidth": 2,
+    "trailingComma": "es5"
+  }
 }

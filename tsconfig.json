@@ -3,6 +3,8 @@
   "include": ["src"],
   "files": ["src/appsscript.json"],
   "compilerOptions": {
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": false,
     "declaration": false,
