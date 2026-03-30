@@ -7,3 +7,10 @@ dist
 # for running scripts from the command line
 creds.json
 .clasprc.json
+
+# Coverage output
+coverage/
+
+# Ignore test data
+/test-data
+/Stake -*
