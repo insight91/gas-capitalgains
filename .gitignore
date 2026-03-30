@@ -7,3 +7,7 @@ dist
 # for running scripts from the command line
 creds.json
 .clasprc.json
+
+# Ignore test data
+/test-data
+/Stake -*

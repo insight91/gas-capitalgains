@@ -5,102 +5,46 @@
 // AXP 1 $150 B  2021
 // AXP 1 $160 S  2022 - CG - $20
 
+// Notes
+// If you hold the share for more than 12 months, then you only pay half the CGT - 50% gain becomes 25%
+// FX: use buy date FX rate for cost base, sell date FX rate for proceeds
+
+// calculateCapitalGains and its types are globally available in GAS (all script files share scope).
+// The declare below gives TypeScript visibility without emitting a runtime import.
+declare function calculateCapitalGains(trades: import('./calculateCapitalGains').Trade[]): import('./calculateCapitalGains').CGResult;
+
 function calculateCG4(e: any) {
-  let { range, dateCol, symbolCol, typeCol, unitsCol, priceUSDCol, valueUSDCol, fxRateCol, localCurrencyCol, brokerageCol } = iStakeSheet();
+  const { range, dateCol, symbolCol, typeCol, unitsCol, priceUSDCol, valueUSDCol, fxRateCol, localCurrencyCol, brokerageCol } = iStakeSheet();
 
-  // Initialize variables for tracking capital gains
-  let trades = range.getValues();
+  const trades: import('./calculateCapitalGains').Trade[] = range.getValues().map((row: any[]) => ({
+    date: new Date(row[dateCol]),
+    symbol: row[symbolCol],
+    side: row[typeCol],
+    units: parseFloat(row[unitsCol]),
+    priceUSD: parseFloat(row[priceUSDCol]),
+    valueUSD: parseFloat(row[valueUSDCol]),
+    fxRate: parseFloat(row[fxRateCol]),
+    localCurrencyValue: parseFloat(row[localCurrencyCol]),
+    brokerage: parseFloat(row[brokerageCol]),
+  }));
 
-  // Create an object to store capital gains for each stock under each FY
-  var CG = {};
-
-  let initYear = 2020; // let initYear = trades[0][dateCol].getFullYear();
-  let FYStart = new Date(initYear, 6, 1);
-  let FYEnd = new Date(initYear + 1, 5, 30);
-
-  // Loop through the share trades
-  for (let trade of trades) {
-    var date = new Date(trade[dateCol]);
-    let symbol = trade[symbolCol];
-    var type = trade[typeCol];
-    var units = parseFloat(trade[unitsCol]);
-    var price = parseFloat(trade[priceUSDCol]);
-    var brokerage = parseFloat(trade[brokerageCol]);
-    var valueUSD = parseFloat(trade[valueUSDCol]); // not incl. brokerage
-    // local
-    let fxRate = parseFloat(trade[fxRateCol]);
-
-    let FY = FYStart.getFullYear();
-
-    if (date >= FYStart && date <= FYEnd) {
-      if (!CG[FY]) {
-        CG[FY] = {};
-      }
-      if (!CG[FY][symbol]) {
-        CG[FY][symbol] = { capitalGains: 0, buys: [], buysRT: [] }; // buys and buys running total
-      }
-
-      if (type == 'B') {
-        CG[FY][symbol].buys.push({ date, units, price, brokerage });
-        CG[FY][symbol].buysRT.push({ date, units, price, brokerage });
-      } else if (type == 'S') {
-        let r = CG[FY][symbol];
-        let buys: any[] = r.buysRT;
-
-        for (const b of buys) {
-          let buyValue = b.units * b.price;
-          let saleValue = units * price;
-
-          // knock off/minus off  first buy
-          if (units >= b.units) {
-            r.capitalGains += saleValue - buyValue;
-            buys.shift();
-          } else if (units < b.units) {
-            //?
-
-            buys[0].units -= units;
-          } else {
-            continue;
-          }
-        }
-
-        // knock off buy units from here
-        // sell will be less than or equal to the first buy
-        // if it's more than the first buy then we go to second buy
-        // if its' less than the second buy then minus off from that running total row
-
-        // Notes
-        // If you hold the share for more than 12 months, then you only pay half the CGT - 50$ gain becomes 25$
-        // FX Cost base of the rate that you bought it at and use the FX rate on the day that you sell it - convert at both points
-      }
-    }
-
-    // Start the Next Years Calcs
-    if (date > FYEnd) {
-      FYStart = new Date(date.getFullYear(), 6, 1); // 6 represents July
-      FYEnd = new Date(date.getFullYear() + 1, 5, 30); // July to June
-    }
-  }
-
-  // Display or log the capital gains for each stock
-  // let USDollar = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  const CG = calculateCapitalGains(trades);
 
   // Write to CG Sheet
   const ss = SpreadsheetApp.getActive();
-  const res = ss.getSheetByName('Capital Gains Calc (Auto)');
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const res = ss.getSheetByName('Capital Gains Calc (Auto)')!;
   let rowIndex = 1;
 
-  for (let FY in CG) {
+  for (const FY in CG) {
     res.getRange(rowIndex + 1, 1, 1, 1).setValue('FY' + FY);
     rowIndex++;
-    // Logger.log('FY' + FY);
 
-    for (let SYM in CG[FY]) {
+    for (const SYM in CG[FY]) {
       const g = CG[FY][SYM];
       res.getRange(rowIndex + 1, 2, 1, 1).setValue(SYM);
       res.getRange(rowIndex + 1, 8, 1, 1).setValue(g.capitalGains);
       rowIndex++;
-      // Logger.log(' ' + SYM);
 
       g.buys.forEach((b) => {
         res.getRange(rowIndex + 1, 3, 1, 1).setValue(b.date);
@@ -109,9 +53,7 @@ function calculateCG4(e: any) {
         res.getRange(rowIndex + 1, 6, 1, 1).setValue(b.brokerage);
         res.getRange(rowIndex + 1, 7, 1, 1).setValue(b.units * b.price + b.brokerage);
         rowIndex++;
-        // Logger.log('  ' + b.units + ' - ' + b.price);
       });
-      // Logger.log('' + SYM + ' Gain: ' + USDollar.format(g.capitalGain) + ' Cost: ' + USDollar.format(g.acquisitionCost));
     }
   }
 }
@@ -123,7 +65,7 @@ function calculateCG3(e: any) {
   let trades = range.getValues();
 
   // Create an object to store capital gains for each stock
-  var CG = {};
+  var CG: any = {};
 
   let initYear = trades[0][dateCol].getFullYear();
   let FYStart = new Date(initYear, 6, 1);
@@ -191,7 +133,7 @@ function calculateCG2(e: any) {
   let trades = range.getValues();
 
   // Create an object to store capital gains for each stock
-  var capitalGains = {};
+  var capitalGains: any = {};
 
   // Loop through the share trades
   for (let trade of trades) {
@@ -243,9 +185,9 @@ function calculateCG(e: any) {
   let { range, dateCol, symbolCol, typeCol, unitsCol, priceUSDCol, valueUSDCol, fxRateCol, localCurrencyCol, brokerageCol } = iStakeSheet();
 
   // Initialize variables for tracking capital gains
-  var groupedBySymbol = {};
+  var groupedBySymbol: any = {};
   let trades = range.getValues();
-  var capitalGains = {};
+  var capitalGains: any = {};
 
   // From the earliest Trade Date calc it's financial year
   let earliestTradeDate = null;
@@ -298,7 +240,7 @@ function calculateCG(e: any) {
 }
 
 function fyDates() {
-  let years = {};
+  let years: any = {};
   let i = 0;
 
   while (i < 5) {
