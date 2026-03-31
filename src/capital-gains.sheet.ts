@@ -32,20 +32,21 @@ function calculateCG4() {
 
   const rows: any[][] = [];
 
-  rows.push(['FY', 'Symbol', 'Type', 'Date', 'Units', 'Price (AUD)', 'Brokerage', 'Total Value (AUD)', 'Capital Gains (AUD)']);
+  rows.push(['FY', 'Symbol', 'Type', 'Date', 'Units', 'Price (AUD)', 'Brokerage', 'Total Value (AUD)', 'Short-term Gains', 'Long-term Gains (pre-disc)', 'CGT Discount', 'Net Capital Gain']);
 
   for (const FY in CG) {
     for (const SYM in CG[FY]) {
       const g = CG[FY][SYM];
+      const cgtDiscount = g.discountableGains > 0 ? -g.discountableGains * 0.5 : 0;
 
-      rows.push(['FY' + FY, SYM, '', '', '', '', '', '', g.capitalGains]);
+      rows.push(['FY' + FY, SYM, '', '', '', '', '', '', g.shortTermGains, g.discountableGains, cgtDiscount, g.capitalGains]);
 
       g.buys.forEach((b) => {
-        rows.push(['', '', 'B', b.date, b.units, b.price, b.brokerage, b.units * b.price + b.brokerage, '']);
+        rows.push(['', '', 'B', b.date, b.units, b.price, b.brokerage, b.units * b.price + b.brokerage, '', '', '', '']);
       });
 
       g.sells.forEach((s) => {
-        rows.push(['', '', 'S', s.date, s.units, s.price, s.brokerage, s.units * s.price - s.brokerage, '']);
+        rows.push(['', '', 'S', s.date, s.units, s.price, s.brokerage, s.units * s.price - s.brokerage, '', '', '', '']);
       });
     }
   }

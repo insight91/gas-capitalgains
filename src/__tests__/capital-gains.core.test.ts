@@ -161,4 +161,59 @@ describe('calculateCapitalGains', () => {
     // FY2021 has the buy recorded but no capital gain
     expect(result[2021]['TSLA'].capitalGains).toBe(0);
   });
+
+  it('CGT discount: lot held exactly 365 days is NOT discountable', () => {
+    // Aug 1 2020 → Aug 1 2021 = exactly 365 days, not > 365
+    // Sell is in FY2021 (Jul 2021 – Jun 2022), so gain attributed to FY2021
+    const trades: Trade[] = [
+      makeTrade({ date: new Date('2020-08-01'), symbol: 'AXP', side: 'B', units: 1, priceUSD: 100 }),
+      makeTrade({ date: new Date('2021-08-01'), symbol: 'AXP', side: 'S', units: 1, priceUSD: 200 }),
+    ];
+    const result = calculateCapitalGains(trades);
+    expect(result[2021]['AXP'].shortTermGains).toBe(100);
+    expect(result[2021]['AXP'].discountableGains).toBe(0);
+    expect(result[2021]['AXP'].capitalGains).toBe(100); // no discount
+  });
+
+  it('CGT discount: lot held more than 365 days gets 50% discount', () => {
+    // Aug 1 2020 → Aug 2 2021 = 366 days → discountable
+    // gain pre-discount = 100, after 50% discount = 50
+    // Sell is in FY2021, so gain attributed to FY2021
+    const trades: Trade[] = [
+      makeTrade({ date: new Date('2020-08-01'), symbol: 'AXP', side: 'B', units: 1, priceUSD: 100 }),
+      makeTrade({ date: new Date('2021-08-02'), symbol: 'AXP', side: 'S', units: 1, priceUSD: 200 }),
+    ];
+    const result = calculateCapitalGains(trades);
+    expect(result[2021]['AXP'].shortTermGains).toBe(0);
+    expect(result[2021]['AXP'].discountableGains).toBe(100);
+    expect(result[2021]['AXP'].capitalGains).toBe(50); // 50% discount applied
+  });
+
+  it('CGT discount: long-term loss is NOT discounted (full loss preserved)', () => {
+    // gain pre-discount = -100 (a loss), after: still -100 (no discount on losses)
+    // Sell is in FY2021, so loss attributed to FY2021
+    const trades: Trade[] = [
+      makeTrade({ date: new Date('2020-08-01'), symbol: 'AXP', side: 'B', units: 1, priceUSD: 200 }),
+      makeTrade({ date: new Date('2021-08-02'), symbol: 'AXP', side: 'S', units: 1, priceUSD: 100 }),
+    ];
+    const result = calculateCapitalGains(trades);
+    expect(result[2021]['AXP'].discountableGains).toBe(-100);
+    expect(result[2021]['AXP'].capitalGains).toBe(-100); // full loss, no discount
+  });
+
+  it('CGT discount: mixed lots — one short-term and one long-term in same sell', () => {
+    // Buy lot 1: Aug 1 2020 @ $100 (held 366 days to Aug 2 2021 → discountable), gain = 50
+    // Buy lot 2: Aug 1 2021 @ $100 (held 1 day → short-term), gain = 50
+    // Both sells land in FY2021; discountableGains=50, shortTermGains=50
+    // capitalGains = 50 + 50 * 0.5 = 75
+    const trades: Trade[] = [
+      makeTrade({ date: new Date('2020-08-01'), symbol: 'AXP', side: 'B', units: 1, priceUSD: 100 }),
+      makeTrade({ date: new Date('2021-08-01'), symbol: 'AXP', side: 'B', units: 1, priceUSD: 100 }),
+      makeTrade({ date: new Date('2021-08-02'), symbol: 'AXP', side: 'S', units: 2, priceUSD: 150 }),
+    ];
+    const result = calculateCapitalGains(trades);
+    expect(result[2021]['AXP'].shortTermGains).toBe(50);
+    expect(result[2021]['AXP'].discountableGains).toBe(50);
+    expect(result[2021]['AXP'].capitalGains).toBe(75);
+  });
 });
