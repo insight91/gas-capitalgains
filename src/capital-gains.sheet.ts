@@ -35,6 +35,10 @@ function calculateCG4() {
   rows.push(['FY', 'Symbol', 'Type', 'Date', 'Units', 'Price (AUD)', 'Brokerage', 'Total Value (AUD)', 'Short-term Gains', 'Long-term Gains (pre-disc)', 'CGT Discount', 'Net Capital Gain']);
 
   for (const FY in CG) {
+    let fyShortTerm = 0;
+    let fyDiscountable = 0;
+    let fyNet = 0;
+
     for (const SYM in CG[FY]) {
       const g = CG[FY][SYM];
       const cgtDiscount = g.discountableGains > 0 ? -g.discountableGains * 0.5 : 0;
@@ -48,7 +52,14 @@ function calculateCG4() {
       g.sells.forEach((s) => {
         rows.push(['', '', 'S', s.date, s.units, s.price, s.brokerage, s.units * s.price - s.brokerage, '', '', '', '']);
       });
+
+      fyShortTerm += g.shortTermGains;
+      fyDiscountable += g.discountableGains;
+      fyNet += g.capitalGains;
     }
+
+    const fyCgtDiscount = fyDiscountable > 0 ? -fyDiscountable * 0.5 : 0;
+    rows.push(['FY' + FY, 'TOTAL', '', '', '', '', '', '', fyShortTerm, fyDiscountable, fyCgtDiscount, fyNet]);
   }
 
   if (rows.length > 0) {

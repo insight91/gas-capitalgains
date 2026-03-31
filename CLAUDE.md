@@ -50,6 +50,7 @@ To deploy, you need clasp authenticated (`~/.clasprc.json`). The script ID is in
 
 - Repo: `warrendodsworth/gas-capitalgains`
 - Project board: None
+- Issues: Create issues with labels `bug`, `enhancement`, `help wanted` as needed. Issue name/title should start with the issue number #<issue_number> <issue_name>. Reference issues in PRs with "Closes #<issue_number>".
 - Scripts:
   - `gh project item-add` requires gh CLI ≥ v2.31.0 — scripts use GraphQL fallback if needed
 
