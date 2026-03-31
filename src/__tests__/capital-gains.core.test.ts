@@ -42,19 +42,29 @@ describe('calculateCapitalGains', () => {
     const result = calculateCapitalGains(trades);
     // Gain against first buy (100): (150 - 100) * 1 = 50
     expect(result[2020]['AXP'].capitalGains).toBe(50);
-    // Second lot remains in buysRT
-    expect(result[2020]['AXP'].buysRT).toHaveLength(1);
-    expect(result[2020]['AXP'].buysRT[0].price).toBe(200);
   });
 
-  it('partial sell decrements buysRT lot units rather than removing the lot', () => {
+  it('FIFO: selling the remaining lot uses the second buy price', () => {
+    const trades: Trade[] = [
+      makeTrade({ date: new Date('2020-08-01'), symbol: 'AXP', side: 'B', units: 1, priceUSD: 100 }),
+      makeTrade({ date: new Date('2020-11-01'), symbol: 'AXP', side: 'B', units: 1, priceUSD: 200 }),
+      makeTrade({ date: new Date('2021-01-01'), symbol: 'AXP', side: 'S', units: 1, priceUSD: 150 }),
+      makeTrade({ date: new Date('2021-02-01'), symbol: 'AXP', side: 'S', units: 1, priceUSD: 150 }),
+    ];
+    const result = calculateCapitalGains(trades);
+    // First sell: (150-100)*1 = 50, second sell: (150-200)*1 = -50, net = 0
+    expect(result[2020]['AXP'].capitalGains).toBe(0);
+  });
+
+  it('partial sell: remaining units are consumed correctly by a follow-up sell', () => {
     const trades: Trade[] = [
       makeTrade({ date: new Date('2020-08-01'), symbol: 'AAPL', side: 'B', units: 3, priceUSD: 100 }),
       makeTrade({ date: new Date('2021-01-01'), symbol: 'AAPL', side: 'S', units: 1, priceUSD: 130 }),
+      makeTrade({ date: new Date('2021-02-01'), symbol: 'AAPL', side: 'S', units: 2, priceUSD: 130 }),
     ];
     const result = calculateCapitalGains(trades);
-    expect(result[2020]['AAPL'].buysRT).toHaveLength(1);
-    expect(result[2020]['AAPL'].buysRT[0].units).toBe(2); // 3 - 1 = 2 remaining
+    // Total gain: (130-100)*3 = 90
+    expect(result[2020]['AAPL'].capitalGains).toBe(90);
   });
 
   it('trades are bucketed into the correct Australian financial year', () => {
@@ -69,13 +79,25 @@ describe('calculateCapitalGains', () => {
     expect(result[2021]['MSFT'].buys).toHaveLength(1);
   });
 
-  it('cross-FY carry-over: buy in FY2022, sell in FY2023 calculates gain correctly', () => {
+  it('cross-FY (same window): buy Oct 2022 + sell Feb 2023 are both within the FY2022 window', () => {
     const trades: Trade[] = [
       makeTrade({ date: new Date('2022-10-01'), symbol: 'TSLA', side: 'B', units: 2, priceUSD: 200 }),
       makeTrade({ date: new Date('2023-02-01'), symbol: 'TSLA', side: 'S', units: 2, priceUSD: 250 }),
     ];
     const result = calculateCapitalGains(trades);
-    // Sell is in FY2022 window (Jul 2022 – Jun 2023), buy was also FY2022 — gain = (250-200)*2 = 100
+    // Both fall within FY2022 (Jul 2022 – Jun 2023), gain = (250-200)*2 = 100
     expect(result[2022]['TSLA'].capitalGains).toBe(100);
+  });
+
+  it('cross-FY: buy in FY2021 (Aug 2021) matched against sell in FY2022 (Aug 2022)', () => {
+    const trades: Trade[] = [
+      makeTrade({ date: new Date('2021-08-01'), symbol: 'TSLA', side: 'B', units: 2, priceUSD: 200 }),
+      makeTrade({ date: new Date('2022-08-01'), symbol: 'TSLA', side: 'S', units: 2, priceUSD: 250 }),
+    ];
+    const result = calculateCapitalGains(trades);
+    // Gain is attributed to FY2022 (sell FY): (250-200)*2 = 100
+    expect(result[2022]['TSLA'].capitalGains).toBe(100);
+    // FY2021 has the buy recorded but no capital gain
+    expect(result[2021]['TSLA'].capitalGains).toBe(0);
   });
 });

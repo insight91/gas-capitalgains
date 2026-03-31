@@ -31,16 +31,6 @@ describeIfCsv('calculateCapitalGains — real Stake data', () => {
     }
   });
 
-  it('every buysRT lot has non-negative units', () => {
-    for (const fy of Object.values(result)) {
-      for (const sym of Object.values(fy) as SymbolResult[]) {
-        for (const lot of sym.buysRT) {
-          expect(lot.units).toBeGreaterThanOrEqual(0);
-        }
-      }
-    }
-  });
-
   it('ARKK appears in FY2020 (Mar 2021 trades fall in Jul 2020 – Jun 2021 window)', () => {
     expect(result[2020]).toBeDefined();
     expect(result[2020]['ARKK']).toBeDefined();
