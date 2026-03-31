@@ -31,4 +31,4 @@ jobs:
           CLASPRC: ${{ secrets.CLASPRC }}
         run: |
           echo "$CLASPRC" > ~/.clasprc.json
-          npx clasp push
+          npm run publish
