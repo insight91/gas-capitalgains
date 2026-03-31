@@ -1,10 +1,11 @@
 import { calculateCapitalGains, Trade } from '../capital-gains.core';
 
 function makeTrade(overrides: Partial<Trade> & Pick<Trade, 'date' | 'symbol' | 'side' | 'units' | 'priceUSD'>): Trade {
+  const fxRate = overrides.fxRate ?? 1;
   return {
     valueUSD: overrides.units * overrides.priceUSD,
-    fxRate: 0.68,
-    localCurrencyValue: (overrides.units * overrides.priceUSD) / 0.68,
+    fxRate,
+    localCurrencyValue: (overrides.units * overrides.priceUSD) / fxRate,
     brokerage: -1,
     ...overrides,
   };
@@ -87,6 +88,30 @@ describe('calculateCapitalGains', () => {
     const result = calculateCapitalGains(trades);
     // Both fall within FY2022 (Jul 2022 – Jun 2023), gain = (250-200)*2 = 100
     expect(result[2022]['TSLA'].capitalGains).toBe(100);
+  });
+
+  it('FX conversion: gain is calculated in AUD using each trade fxRate', () => {
+    // buy @ $100 USD, fxRate=0.5 → AUD cost = 200
+    // sell @ $150 USD, fxRate=0.5 → AUD proceeds = 300
+    // gain = 300 - 200 = 100 AUD
+    const trades: Trade[] = [
+      makeTrade({ date: new Date('2020-08-01'), symbol: 'AXP', side: 'B', units: 1, priceUSD: 100, fxRate: 0.5 }),
+      makeTrade({ date: new Date('2021-01-01'), symbol: 'AXP', side: 'S', units: 1, priceUSD: 150, fxRate: 0.5 }),
+    ];
+    const result = calculateCapitalGains(trades);
+    expect(result[2020]['AXP'].capitalGains).toBeCloseTo(100, 5);
+  });
+
+  it('FX conversion: different buy/sell FX rates are applied independently', () => {
+    // buy @ $100 USD, fxRate=0.5 → AUD cost = 200
+    // sell @ $100 USD, fxRate=0.25 → AUD proceeds = 400
+    // gain = 400 - 200 = 200 AUD (same USD price but FX moved)
+    const trades: Trade[] = [
+      makeTrade({ date: new Date('2020-08-01'), symbol: 'AXP', side: 'B', units: 1, priceUSD: 100, fxRate: 0.5 }),
+      makeTrade({ date: new Date('2021-01-01'), symbol: 'AXP', side: 'S', units: 1, priceUSD: 100, fxRate: 0.25 }),
+    ];
+    const result = calculateCapitalGains(trades);
+    expect(result[2020]['AXP'].capitalGains).toBeCloseTo(200, 5);
   });
 
   it('cross-FY: buy in FY2021 (Aug 2021) matched against sell in FY2022 (Aug 2022)', () => {

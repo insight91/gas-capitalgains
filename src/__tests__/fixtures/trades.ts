@@ -4,8 +4,8 @@ import { Trade } from '../../capital-gains.core';
 // DATE (US), SYMBOL, SIDE, UNITS, EFFECTIVE PRICE (USD), VALUE (USD),
 // FX RATE, LOCAL CURRENCY VALUE, BROKERAGE FEE (USD)
 //
-// FX rate ~0.68 (USD to AUD). AUD conversion not yet implemented in logic
-// but included here to future-proof fixtures.
+// FX rate is USD per AUD (e.g. 0.71 means 1 AUD = 0.71 USD).
+// priceAUD = priceUSD / fxRate. localCurrencyValue = valueUSD / fxRate.
 
 export const trades: Trade[] = [
   // --- FY2021 (Jul 2020 – Jun 2021) ---
@@ -20,8 +20,8 @@ export const trades: Trade[] = [
   { date: new Date('2022-01-15'), symbol: 'AAPL', side: 'S', units: 1, priceUSD: 150, valueUSD: 150, fxRate: 0.72, localCurrencyValue: 208.33, brokerage: -1 },
   { date: new Date('2022-04-20'), symbol: 'AAPL', side: 'S', units: 1, priceUSD: 170, valueUSD: 170, fxRate: 0.74, localCurrencyValue: 229.73, brokerage: -1 },
 
-  // --- Cross-FY carry-over (known bug) ---
-  // Buy in FY2023, sell in FY2024 — the current logic cannot handle this
+  // --- Cross-FY carry-over ---
+  // Buy in FY2022 (Oct 2022), sell in FY2022 (Feb 2023) — same FY window
   { date: new Date('2022-10-01'), symbol: 'TSLA', side: 'B', units: 3, priceUSD: 200, valueUSD: 600, fxRate: 0.64, localCurrencyValue: 937.50, brokerage: -2 },
   { date: new Date('2023-02-01'), symbol: 'TSLA', side: 'S', units: 2, priceUSD: 250, valueUSD: 500, fxRate: 0.69, localCurrencyValue: 724.64, brokerage: -2 },
 ];
