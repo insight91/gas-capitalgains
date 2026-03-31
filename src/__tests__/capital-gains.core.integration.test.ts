@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { calculateCapitalGains, CGResult, SymbolResult } from '../calculateCapitalGains';
+import { calculateCapitalGains, CGResult, SymbolResult } from '../capital-gains.core';
 import { parseTradesCsv, TRADES_CSV_PATH } from './fixtures/parseTradesCsv';
 
 const csvExists = fs.existsSync(TRADES_CSV_PATH);

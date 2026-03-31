@@ -6,10 +6,10 @@ const EDIT_TK = 'onedit_calculateCG';
 
 function onOpen() {
   // Calc on open
-  calculateCG(null);
+  calculateCG4(null);
 
   // Add Menu Option
-  SpreadsheetApp.getUi().createMenu('Calculate').addItem('Calculate CG', 'calculateCG').addToUi();
+  SpreadsheetApp.getUi().createMenu('Calculate').addItem('Calculate CG', 'calculateCG4').addToUi();
 }
 
 // not required for this project
@@ -20,7 +20,7 @@ function createTimeDrivenTrigger() {
   const p = props.getProperty(TIMED_TK);
   if (p) return;
 
-  const tb = ScriptApp.newTrigger('calculateCG').timeBased().everyMinutes(1).create();
+  const tb = ScriptApp.newTrigger('calculateCG4').timeBased().everyMinutes(1).create();
   const id = tb.getUniqueId();
   props.setProperties({ [TIMED_TK]: id });
   Logger.log('[trigger] timedriven calculate CG', id);

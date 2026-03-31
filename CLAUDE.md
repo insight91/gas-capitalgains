@@ -29,6 +29,7 @@ To deploy, you need clasp authenticated (`~/.clasprc.json`). The script ID is in
 **Runtime**: TypeScript compiles to `dist/`, which clasp pushes to Google Apps Script. There is no bundler — each `.ts` file becomes a separate `.js` file in GAS.
 
 **Data flow**:
+
 1. `onOpen()` in [src/index.ts](src/index.ts) fires when the spreadsheet opens and calls `calculateCG4()`
 2. `iStakeSheet()` in [src/util.ts](src/util.ts) reads the "Trades" sheet, maps column indices by header name, and returns the data range + column index map
 3. `calculateCG4()` in [src/capital-gains.ts](src/capital-gains.ts) iterates trades, applies FIFO matching of buys to sells, groups results by Australian financial year (July 1–June 30) and stock symbol, then writes rows to "Capital Gains Calc (Auto)"
@@ -45,3 +46,16 @@ To deploy, you need clasp authenticated (`~/.clasprc.json`). The script ID is in
 - `calculateCG`, `calculateCG2`, `calculateCG3` are earlier iterations left in the file for reference. Only `calculateCG4` writes output to the sheet.
 - `cell-edit.ts` is a stub with no active functionality.
 - `dist/appsscript.json` is the GAS manifest (timezone: `Australia/Melbourne`, runtime: V8).
+
+## GitHub Project
+
+- Repo: `warrendodsworth/gas-capitalgains`
+- Project board: None
+- Scripts:
+  - `gh project item-add` requires gh CLI ≥ v2.31.0 — scripts use GraphQL fallback if needed
+
+## Branch Strategy
+
+- `master` — main/production branch
+- Create a feature branch for any work related to a Github issue: `feat/<name>`
+- PRs which reference an issue must have Closes #<issue_number> in the description.

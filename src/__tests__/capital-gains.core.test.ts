@@ -1,4 +1,4 @@
-import { calculateCapitalGains, Trade } from '../calculateCapitalGains';
+import { calculateCapitalGains, Trade } from '../capital-gains.core';
 
 function makeTrade(overrides: Partial<Trade> & Pick<Trade, 'date' | 'symbol' | 'side' | 'units' | 'priceUSD'>): Trade {
   return {
