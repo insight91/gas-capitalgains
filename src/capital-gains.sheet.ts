@@ -32,7 +32,7 @@ function calculateCG4() {
 
   const rows: any[][] = [];
 
-  rows.push(['FY', 'Symbol', 'Type', 'Date', 'Units', 'Price (USD)', 'Brokerage', 'Total Value', 'Capital Gains']);
+  rows.push(['FY', 'Symbol', 'Type', 'Date', 'Units', 'Price (AUD)', 'Brokerage', 'Total Value (AUD)', 'Capital Gains (AUD)']);
 
   for (const FY in CG) {
     for (const SYM in CG[FY]) {

@@ -49,7 +49,7 @@ export function calculateCapitalGains(trades: Trade[]): CGResult {
   let FYEnd = new Date(initYear + 1, 5, 30);
 
   for (const trade of trades) {
-    const { date, symbol, side, units, priceUSD, brokerage } = trade;
+    const { date, symbol, side, units, priceUSD, fxRate, brokerage } = trade;
 
     // Advance FY window before processing so trades on or after July 1 land in the correct year
     if (date > FYEnd) {
@@ -67,25 +67,29 @@ export function calculateCapitalGains(trades: Trade[]): CGResult {
         CG[FY][symbol] = { capitalGains: 0, buys: [], sells: [] };
       }
 
+      // fxRate is AUD per USD (e.g. 1.29 means 1 USD = 1.29 AUD)
+      // AUD price = priceUSD * fxRate
+      const priceAUD = priceUSD * fxRate;
+
       if (side === 'B') {
-        const lot: BuyLot = { date, units, price: priceUSD, brokerage };
+        const lot: BuyLot = { date, units, price: priceAUD, brokerage };
         CG[FY][symbol].buys.push(lot);
         if (!globalBuysRT[symbol]) globalBuysRT[symbol] = [];
         globalBuysRT[symbol].push(lot);
       } else if (side === 'S') {
         const r = CG[FY][symbol];
-        r.sells.push({ date, units, price: priceUSD, brokerage });
+        r.sells.push({ date, units, price: priceAUD, brokerage });
         const buys = globalBuysRT[symbol] ?? [];
 
         let unitsToSell = units;
         while (unitsToSell > 0 && buys.length > 0) {
           const b = buys[0];
           if (unitsToSell >= b.units) {
-            r.capitalGains += b.units * (priceUSD - b.price);
+            r.capitalGains += b.units * (priceAUD - b.price);
             unitsToSell -= b.units;
             buys.shift();
           } else {
-            r.capitalGains += unitsToSell * (priceUSD - b.price);
+            r.capitalGains += unitsToSell * (priceAUD - b.price);
             b.units -= unitsToSell;
             unitsToSell = 0;
           }
