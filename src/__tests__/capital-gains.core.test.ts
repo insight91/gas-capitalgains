@@ -6,7 +6,7 @@ function makeTrade(overrides: Partial<Trade> & Pick<Trade, 'date' | 'symbol' | '
     valueUSD: overrides.units * overrides.priceUSD,
     fxRate,
     localCurrencyValue: (overrides.units * overrides.priceUSD) * fxRate,
-    brokerage: -1,
+    brokerage: 0,
     ...overrides,
   };
 }
@@ -112,6 +112,42 @@ describe('calculateCapitalGains', () => {
     ];
     const result = calculateCapitalGains(trades);
     expect(result[2020]['AXP'].capitalGains).toBeCloseTo(50, 5);
+  });
+
+  it('brokerage: buy brokerage increases cost base, reducing the gain', () => {
+    // buy @ $100 AUD, $5 brokerage → costPerUnit = 105
+    // sell @ $120 AUD, no brokerage → proceeds = 120
+    // gain = 120 - 105 = 15
+    const trades: Trade[] = [
+      makeTrade({ date: new Date('2020-08-01'), symbol: 'AXP', side: 'B', units: 1, priceUSD: 100, brokerage: -5 }),
+      makeTrade({ date: new Date('2021-01-01'), symbol: 'AXP', side: 'S', units: 1, priceUSD: 120, brokerage: 0 }),
+    ];
+    const result = calculateCapitalGains(trades);
+    expect(result[2020]['AXP'].capitalGains).toBeCloseTo(15, 5);
+  });
+
+  it('brokerage: sell brokerage reduces proceeds, reducing the gain', () => {
+    // buy @ $100 AUD, no brokerage → costPerUnit = 100
+    // sell @ $120 AUD, $5 brokerage → proceedsPerUnit = 115
+    // gain = 115 - 100 = 15
+    const trades: Trade[] = [
+      makeTrade({ date: new Date('2020-08-01'), symbol: 'AXP', side: 'B', units: 1, priceUSD: 100, brokerage: 0 }),
+      makeTrade({ date: new Date('2021-01-01'), symbol: 'AXP', side: 'S', units: 1, priceUSD: 120, brokerage: -5 }),
+    ];
+    const result = calculateCapitalGains(trades);
+    expect(result[2020]['AXP'].capitalGains).toBeCloseTo(15, 5);
+  });
+
+  it('brokerage: prorated correctly across partial FIFO sell', () => {
+    // buy 2 units @ $100, $10 brokerage → costPerUnit = 105
+    // sell 1 unit @ $120, $2 brokerage → proceedsPerUnit = 118
+    // gain on 1 unit = 118 - 105 = 13
+    const trades: Trade[] = [
+      makeTrade({ date: new Date('2020-08-01'), symbol: 'AXP', side: 'B', units: 2, priceUSD: 100, brokerage: -10 }),
+      makeTrade({ date: new Date('2021-01-01'), symbol: 'AXP', side: 'S', units: 1, priceUSD: 120, brokerage: -2 }),
+    ];
+    const result = calculateCapitalGains(trades);
+    expect(result[2020]['AXP'].capitalGains).toBeCloseTo(13, 5);
   });
 
   it('cross-FY: buy in FY2021 (Aug 2021) matched against sell in FY2022 (Aug 2022)', () => {
