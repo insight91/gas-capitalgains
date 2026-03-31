@@ -13,15 +13,16 @@ export interface Trade {
 export interface BuyLot {
   date: Date;
   units: number;
-  price: number;
-  brokerage: number;
+  price: number;      // priceAUD (for display)
+  brokerage: number;  // brokerageAUD, positive (for display)
+  costPerUnit: number; // (price + brokerage / originalUnits) — used in FIFO gain calc
 }
 
 export interface SellLot {
   date: Date;
   units: number;
-  price: number;
-  brokerage: number;
+  price: number;      // priceAUD (for display)
+  brokerage: number;  // brokerageAUD, positive (for display)
 }
 
 export interface SymbolResult {
@@ -68,28 +69,38 @@ export function calculateCapitalGains(trades: Trade[]): CGResult {
       }
 
       // fxRate is AUD per USD (e.g. 1.29 means 1 USD = 1.29 AUD)
-      // AUD price = priceUSD * fxRate
       const priceAUD = priceUSD * fxRate;
+      // brokerage is negative USD in the Stake export — convert to positive AUD
+      const brokerageAUD = Math.abs(brokerage) * fxRate;
 
       if (side === 'B') {
-        const lot: BuyLot = { date, units, price: priceAUD, brokerage };
+        const lot: BuyLot = {
+          date,
+          units,
+          price: priceAUD,
+          brokerage: brokerageAUD,
+          costPerUnit: priceAUD + brokerageAUD / units,
+        };
         CG[FY][symbol].buys.push(lot);
         if (!globalBuysRT[symbol]) globalBuysRT[symbol] = [];
         globalBuysRT[symbol].push(lot);
       } else if (side === 'S') {
         const r = CG[FY][symbol];
-        r.sells.push({ date, units, price: priceAUD, brokerage });
+        r.sells.push({ date, units, price: priceAUD, brokerage: brokerageAUD });
+
+        // Proceeds per unit after deducting sell brokerage
+        const proceedsPerUnit = priceAUD - brokerageAUD / units;
         const buys = globalBuysRT[symbol] ?? [];
 
         let unitsToSell = units;
         while (unitsToSell > 0 && buys.length > 0) {
           const b = buys[0];
           if (unitsToSell >= b.units) {
-            r.capitalGains += b.units * (priceAUD - b.price);
+            r.capitalGains += b.units * (proceedsPerUnit - b.costPerUnit);
             unitsToSell -= b.units;
             buys.shift();
           } else {
-            r.capitalGains += unitsToSell * (priceAUD - b.price);
+            r.capitalGains += unitsToSell * (proceedsPerUnit - b.costPerUnit);
             b.units -= unitsToSell;
             unitsToSell = 0;
           }
