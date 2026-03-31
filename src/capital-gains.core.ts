@@ -67,9 +67,9 @@ export function calculateCapitalGains(trades: Trade[]): CGResult {
         CG[FY][symbol] = { capitalGains: 0, buys: [], sells: [] };
       }
 
-      // fxRate is USD per AUD (e.g. 0.71 means 1 AUD = 0.71 USD)
-      // AUD price = priceUSD / fxRate
-      const priceAUD = priceUSD / fxRate;
+      // fxRate is AUD per USD (e.g. 1.29 means 1 USD = 1.29 AUD)
+      // AUD price = priceUSD * fxRate
+      const priceAUD = priceUSD * fxRate;
 
       if (side === 'B') {
         const lot: BuyLot = { date, units, price: priceAUD, brokerage };
