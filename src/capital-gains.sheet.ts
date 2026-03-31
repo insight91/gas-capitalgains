@@ -25,8 +25,7 @@ function calculateCG4() {
   const CG = calculateCapitalGains(trades);
 
   const ss = SpreadsheetApp.getActive();
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const res = ss.getSheetByName('Capital Gains Calc (Auto)')!;
+  const res = ss.getSheetByName('Capital Gains Calc (Auto)') ?? ss.insertSheet('Capital Gains Calc (Auto)');
   res.clear();
 
   const rows: any[][] = [];
