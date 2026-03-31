@@ -26,7 +26,9 @@ export interface SellLot {
 }
 
 export interface SymbolResult {
-  capitalGains: number;
+  shortTermGains: number;    // gains from lots held ≤ 12 months
+  discountableGains: number; // gains from lots held > 12 months, pre-discount
+  capitalGains: number;      // net: shortTermGains + (discountableGains >= 0 ? discountableGains * 0.5 : discountableGains)
   buys: BuyLot[];
   sells: SellLot[];
 }
@@ -36,6 +38,8 @@ export interface CGResult {
     [symbol: string]: SymbolResult;
   };
 }
+
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 export function calculateCapitalGains(trades: Trade[]): CGResult {
   const CG: CGResult = {};
@@ -65,7 +69,7 @@ export function calculateCapitalGains(trades: Trade[]): CGResult {
         CG[FY] = {};
       }
       if (!CG[FY][symbol]) {
-        CG[FY][symbol] = { capitalGains: 0, buys: [], sells: [] };
+        CG[FY][symbol] = { shortTermGains: 0, discountableGains: 0, capitalGains: 0, buys: [], sells: [] };
       }
 
       // fxRate is AUD per USD (e.g. 1.29 means 1 USD = 1.29 AUD)
@@ -95,16 +99,28 @@ export function calculateCapitalGains(trades: Trade[]): CGResult {
         let unitsToSell = units;
         while (unitsToSell > 0 && buys.length > 0) {
           const b = buys[0];
+          const lotUnits = unitsToSell >= b.units ? b.units : unitsToSell;
+          const gain = lotUnits * (proceedsPerUnit - b.costPerUnit);
+
+          // ATO 50% CGT discount applies when the asset is held for more than 12 months
+          const holdDays = (date.getTime() - b.date.getTime()) / MS_PER_DAY;
+          if (holdDays > 365) {
+            r.discountableGains += gain;
+          } else {
+            r.shortTermGains += gain;
+          }
+
           if (unitsToSell >= b.units) {
-            r.capitalGains += b.units * (proceedsPerUnit - b.costPerUnit);
             unitsToSell -= b.units;
             buys.shift();
           } else {
-            r.capitalGains += unitsToSell * (proceedsPerUnit - b.costPerUnit);
             b.units -= unitsToSell;
             unitsToSell = 0;
           }
         }
+
+        // Net capital gain: long-term losses keep their full value, long-term gains get 50% discount
+        r.capitalGains = r.shortTermGains + (r.discountableGains >= 0 ? r.discountableGains * 0.5 : r.discountableGains);
       }
     }
   }
