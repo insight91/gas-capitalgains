@@ -1,7 +1,10 @@
 function iStakeSheet() {
   const ss = SpreadsheetApp.getActive();
   const sheet = ss.getSheetByName('Trades');
+  if (!sheet) throw new Error('Sheet "Trades" not found');
+
   const headers = sheet.getDataRange().getValues().shift();
+  if (!headers) throw new Error('Sheet "Trades" has no header row');
 
   // get range with values
   const lastRow = sheet.getLastRow();
