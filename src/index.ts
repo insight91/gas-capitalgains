@@ -2,7 +2,7 @@
 
 function onOpen() {
   // Calc on open
-  calculateCG4(null);
+  calculateCG4();
 
   // Add menu item to recalc on demand
   SpreadsheetApp.getUi().createMenu('Calculate').addItem('Calculate CG', 'calculateCG4').addToUi();

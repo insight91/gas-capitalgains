@@ -8,7 +8,7 @@
 // The declare below gives TypeScript visibility without emitting a runtime import.
 declare function calculateCapitalGains(trades: import('./capital-gains.core').Trade[]): import('./capital-gains.core').CGResult;
 
-function calculateCG4(e: any) {
+function calculateCG4() {
   const { range, dateCol, symbolCol, typeCol, unitsCol, priceUSDCol, valueUSDCol, fxRateCol, localCurrencyCol, brokerageCol } = iStakeSheet();
 
   const trades: import('./capital-gains.core').Trade[] = range.getValues().map((row: any[]) => ({
