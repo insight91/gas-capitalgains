@@ -1,6 +1,7 @@
 {
   "compileOnSave": true,
   "include": ["src"],
+  "exclude": ["src/__tests__"],
   "files": ["src/appsscript.json"],
   "compilerOptions": {
     "strict": true,
@@ -18,6 +19,7 @@
     "module": "esnext",
     "target": "es2015",
     "typeRoots": ["node_modules/@types", "google-apps-script"],
+    "types": ["google-apps-script"],
     "lib": ["esnext", "ESNext.Array"]
   }
 }
