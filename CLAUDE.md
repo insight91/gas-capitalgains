@@ -55,6 +55,6 @@ To deploy, you need clasp authenticated (`~/.clasprc.json`). The script ID is in
 
 ## Branch Strategy
 
-- `master` — main/production branch
-- Create a feature branch for any work related to a Github issue: `feat/<name>`
+- `main` — main/production branch
+- Create a feature branch for any work related to a Github issue: `feat/<github-issue-number>-<name>`
 - PRs which reference an issue must have Closes #<issue_number> in the description.
