@@ -63,4 +63,6 @@ function calculateCG4() {
   if (rows.length > 0) {
     res.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
   }
+
+  SpreadsheetApp.getActive().toast('See "Capital Gains Calc (Auto)" tab for results.', 'Capital Gains Complete', 5);
 }
