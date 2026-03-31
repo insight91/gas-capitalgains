@@ -17,10 +17,18 @@ export interface BuyLot {
   brokerage: number;
 }
 
+export interface SellLot {
+  date: Date;
+  units: number;
+  price: number;
+  brokerage: number;
+}
+
 export interface SymbolResult {
   capitalGains: number;
   buys: BuyLot[];
   buysRT: BuyLot[];
+  sells: SellLot[];
 }
 
 export interface CGResult {
@@ -52,7 +60,7 @@ export function calculateCapitalGains(trades: Trade[]): CGResult {
         CG[FY] = {};
       }
       if (!CG[FY][symbol]) {
-        CG[FY][symbol] = { capitalGains: 0, buys: [], buysRT: [] };
+        CG[FY][symbol] = { capitalGains: 0, buys: [], buysRT: [], sells: [] };
       }
 
       if (side === 'B') {
@@ -60,6 +68,7 @@ export function calculateCapitalGains(trades: Trade[]): CGResult {
         CG[FY][symbol].buysRT.push({ date, units, price: priceUSD, brokerage });
       } else if (side === 'S') {
         const r = CG[FY][symbol];
+        r.sells.push({ date, units, price: priceUSD, brokerage });
         const buys: BuyLot[] = r.buysRT;
 
         let unitsToSell = units;

@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Trade } from '../../calculateCapitalGains';
+import { Trade } from '../../capital-gains.core';
 
 export const TRADES_CSV_PATH = path.resolve(__dirname, '../../../test-data/Trades-Table 1.csv');
 

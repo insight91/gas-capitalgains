@@ -1,4 +1,4 @@
-import { Trade } from '../../calculateCapitalGains';
+import { Trade } from '../../capital-gains.core';
 
 // Sample trades matching columns from the Stake "Trades" tab export:
 // DATE (US), SYMBOL, SIDE, UNITS, EFFECTIVE PRICE (USD), VALUE (USD),
