@@ -14,7 +14,7 @@
     "importHelpers": true,
     "baseUrl": "./",
     "outDir": "dist",
-    "module": "none",
+    "module": "commonjs",
     "target": "es2015",
     "typeRoots": ["node_modules/@types", "google-apps-script"],
     "types": ["google-apps-script"],

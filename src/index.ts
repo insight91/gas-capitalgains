@@ -1,5 +1,7 @@
 /** @OnlyCurrentDoc */
 
+declare function calculateCG4(): void;
+
 function onOpen() {
   // Calc on open
   calculateCG4();

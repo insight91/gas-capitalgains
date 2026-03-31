@@ -4,14 +4,13 @@
 // If you hold the share for more than 12 months, then you only pay half the CGT - 50% gain becomes 25%
 // FX: use buy date FX rate for cost base, sell date FX rate for proceeds
 
-// calculateCapitalGains and its types are globally available in GAS (all script files share scope).
-// The declare below gives TypeScript visibility without emitting a runtime import.
-declare function calculateCapitalGains(trades: import('./capital-gains.core').Trade[]): import('./capital-gains.core').CGResult;
+import type { Trade, CGResult } from './capital-gains.core';
+declare function calculateCapitalGains(trades: Trade[]): CGResult;
 
 function calculateCG4() {
   const { range, dateCol, symbolCol, typeCol, unitsCol, priceUSDCol, valueUSDCol, fxRateCol, localCurrencyCol, brokerageCol } = iStakeSheet();
 
-  const trades: import('./capital-gains.core').Trade[] = range.getValues().map((row: any[]) => ({
+  const trades: Trade[] = range.getValues().map((row: any[]) => ({
     date: new Date(row[dateCol]),
     symbol: row[symbolCol],
     side: row[typeCol],
