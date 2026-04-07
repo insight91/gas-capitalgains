@@ -49,79 +49,70 @@ export function calculateCapitalGains(trades: Trade[]): CGResult {
   // in one sheet).
   const globalBuysRT: { [symbol: string]: BuyLot[] } = {};
 
-  let initYear = 2020;
-  let FYStart = new Date(initYear, 6, 1);
-  let FYEnd = new Date(initYear + 1, 5, 30);
-
   for (const trade of trades) {
     const { date, symbol, side, units, priceUSD, fxRate, brokerage } = trade;
 
-    // Advance FY window before processing so trades on or after July 1 land in the correct year
-    if (date > FYEnd) {
-      FYStart = new Date(date.getFullYear(), 6, 1);
-      FYEnd = new Date(date.getFullYear() + 1, 5, 30);
+    // Australian FY: July 1 – June 30. FY is labelled by the calendar year in which it starts.
+    // e.g. 2021-03-18 → FY2020 (Jul 2020 – Jun 2021); 2021-08-01 → FY2021 (Jul 2021 – Jun 2022)
+    const FY = date.getMonth() >= 6 ? date.getFullYear() : date.getFullYear() - 1;
+
+    if (!CG[FY]) {
+      CG[FY] = {};
+    }
+    if (!CG[FY][symbol]) {
+      CG[FY][symbol] = { shortTermGains: 0, discountableGains: 0, capitalGains: 0, buys: [], sells: [] };
     }
 
-    let FY = FYStart.getFullYear();
+    // fxRate is AUD per USD (e.g. 1.29 means 1 USD = 1.29 AUD)
+    const priceAUD = priceUSD * fxRate;
+    // brokerage is negative USD in the Stake export — convert to positive AUD
+    const brokerageAUD = Math.abs(brokerage) * fxRate;
 
-    if (date >= FYStart && date <= FYEnd) {
-      if (!CG[FY]) {
-        CG[FY] = {};
-      }
-      if (!CG[FY][symbol]) {
-        CG[FY][symbol] = { shortTermGains: 0, discountableGains: 0, capitalGains: 0, buys: [], sells: [] };
-      }
+    if (side === 'B') {
+      const lot: BuyLot = {
+        date,
+        units,
+        price: priceAUD,
+        brokerage: brokerageAUD,
+        costPerUnit: priceAUD + brokerageAUD / units,
+      };
+      CG[FY][symbol].buys.push(lot);
+      if (!globalBuysRT[symbol]) globalBuysRT[symbol] = [];
+      globalBuysRT[symbol].push(lot);
+    } else if (side === 'S') {
+      const r = CG[FY][symbol];
+      r.sells.push({ date, units, price: priceAUD, brokerage: brokerageAUD });
 
-      // fxRate is AUD per USD (e.g. 1.29 means 1 USD = 1.29 AUD)
-      const priceAUD = priceUSD * fxRate;
-      // brokerage is negative USD in the Stake export — convert to positive AUD
-      const brokerageAUD = Math.abs(brokerage) * fxRate;
+      // Proceeds per unit after deducting sell brokerage (units may be negative in Stake export)
+      const absUnits = Math.abs(units);
+      const proceedsPerUnit = priceAUD - brokerageAUD / absUnits;
+      const buys = globalBuysRT[symbol] ?? [];
 
-      if (side === 'B') {
-        const lot: BuyLot = {
-          date,
-          units,
-          price: priceAUD,
-          brokerage: brokerageAUD,
-          costPerUnit: priceAUD + brokerageAUD / units,
-        };
-        CG[FY][symbol].buys.push(lot);
-        if (!globalBuysRT[symbol]) globalBuysRT[symbol] = [];
-        globalBuysRT[symbol].push(lot);
-      } else if (side === 'S') {
-        const r = CG[FY][symbol];
-        r.sells.push({ date, units, price: priceAUD, brokerage: brokerageAUD });
+      let unitsToSell = absUnits;
+      while (unitsToSell > 0 && buys.length > 0) {
+        const b = buys[0];
+        const lotUnits = unitsToSell >= b.units ? b.units : unitsToSell;
+        const gain = lotUnits * (proceedsPerUnit - b.costPerUnit);
 
-        // Proceeds per unit after deducting sell brokerage
-        const proceedsPerUnit = priceAUD - brokerageAUD / units;
-        const buys = globalBuysRT[symbol] ?? [];
-
-        let unitsToSell = units;
-        while (unitsToSell > 0 && buys.length > 0) {
-          const b = buys[0];
-          const lotUnits = unitsToSell >= b.units ? b.units : unitsToSell;
-          const gain = lotUnits * (proceedsPerUnit - b.costPerUnit);
-
-          // ATO 50% CGT discount applies when the asset is held for more than 12 months
-          const holdDays = (date.getTime() - b.date.getTime()) / MS_PER_DAY;
-          if (holdDays > 365) {
-            r.discountableGains += gain;
-          } else {
-            r.shortTermGains += gain;
-          }
-
-          if (unitsToSell >= b.units) {
-            unitsToSell -= b.units;
-            buys.shift();
-          } else {
-            b.units -= unitsToSell;
-            unitsToSell = 0;
-          }
+        // ATO 50% CGT discount applies when the asset is held for more than 12 months
+        const holdDays = (date.getTime() - b.date.getTime()) / MS_PER_DAY;
+        if (holdDays > 365) {
+          r.discountableGains += gain;
+        } else {
+          r.shortTermGains += gain;
         }
 
-        // Net capital gain: long-term losses keep their full value, long-term gains get 50% discount
-        r.capitalGains = r.shortTermGains + (r.discountableGains >= 0 ? r.discountableGains * 0.5 : r.discountableGains);
+        if (unitsToSell >= b.units) {
+          unitsToSell -= b.units;
+          buys.shift();
+        } else {
+          b.units -= unitsToSell;
+          unitsToSell = 0;
+        }
       }
+
+      // Net capital gain: long-term losses keep their full value, long-term gains get 50% discount
+      r.capitalGains = r.shortTermGains + (r.discountableGains >= 0 ? r.discountableGains * 0.5 : r.discountableGains);
     }
   }
 
