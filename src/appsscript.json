@@ -4,6 +4,14 @@
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8",
   "oauthScopes": [
-    "https://www.googleapis.com/auth/spreadsheets.currentonly"
-  ]
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/script.container.ui"
+  ],
+  "addOns": {
+    "common": {
+      "name": "Stake Capital Gains Calculator",
+      "logoUrl": "https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png"
+    },
+    "sheets": {}
+  }
 }

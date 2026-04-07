@@ -1,16 +1,6 @@
-/** @OnlyCurrentDoc */
+declare function calculateCG4(spreadsheetId?: string): void;
 
-declare function calculateCG4(): void;
-
-function onOpen() {
-  // Calc on open
-  calculateCG4();
-
-  // Add menu item to recalc on demand
-  SpreadsheetApp.getUi().createMenu('Calculate').addItem('Calculate CG', 'calculateCG4').addToUi();
+function onOpen(_e: GoogleAppsScript.Events.SheetsOnOpen) {
+  // In restricted auth mode (e.g. add-on install), only create the menu
+  SpreadsheetApp.getUi().createAddonMenu().addItem('Calculate CG', 'calculateCG4').addToUi();
 }
-
-// Triggers are not used in this project — calculateCG4 runs on open instead.
-// Possibilities for future triggers:
-//   createTimeDrivenTrigger() — re-runs calculateCG4 on a time interval (every 5 min)
-//   createEditTrigger()       — re-runs on any cell edit via onCellEdit_

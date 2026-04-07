@@ -1,5 +1,3 @@
-/** @OnlyCurrentDoc */
-
 // Notes
 // If you hold the share for more than 12 months, then you only pay half the CGT - 50% gain becomes 25%
 // FX: use buy date FX rate for cost base, sell date FX rate for proceeds
@@ -7,9 +5,10 @@
 import type { Trade, CGResult } from './capital-gains.core';
 declare function calculateCapitalGains(trades: Trade[]): CGResult;
 
-function calculateCG4() {
+function calculateCG4(spreadsheetId?: string) {
+  const ss = spreadsheetId ? SpreadsheetApp.openById(spreadsheetId) : SpreadsheetApp.getActive();
   try {
-    const { range, dateCol, symbolCol, typeCol, unitsCol, priceUSDCol, valueUSDCol, fxRateCol, localCurrencyCol, brokerageCol } = iStakeSheet();
+    const { range, dateCol, symbolCol, typeCol, unitsCol, priceUSDCol, valueUSDCol, fxRateCol, localCurrencyCol, brokerageCol } = iStakeSheet(ss);
 
     const trades: Trade[] = range.getValues().map((row: any[]) => ({
       date: new Date(row[dateCol]),
@@ -25,8 +24,7 @@ function calculateCG4() {
 
     const CG = calculateCapitalGains(trades);
 
-    const ss = SpreadsheetApp.getActive();
-    const res = ss.getSheetByName('Capital Gains Calc (Auto)') ?? ss.insertSheet('Capital Gains Calc (Auto)');
+    const res = ss.getSheetByName('Capital Gains (Generated)') ?? ss.insertSheet('Capital Gains (Generated)');
     res.clear();
 
     const rows: any[][] = [];
@@ -104,8 +102,8 @@ function calculateCG4() {
 
     const fyCount = fyKeys.length;
     const fyLabel = fyCount === 1 ? '1 financial year' : `${fyCount} financial years`;
-    SpreadsheetApp.getActive().toast(`${fyLabel} processed.`, 'Capital Gains Complete', 5);
+    ss.toast(`${fyLabel} processed.`, 'Capital Gains Complete', 5);
   } catch (e: any) {
-    SpreadsheetApp.getActive().toast(e?.message ?? 'An unexpected error occurred.', 'Capital Gains Error', 10);
+    SpreadsheetApp.getActiveSpreadsheet()?.toast(e?.message ?? 'An unexpected error occurred.', 'Capital Gains Error', 10);
   }
 }
