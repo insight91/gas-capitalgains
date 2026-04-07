@@ -10,17 +10,30 @@ function calculateCG4(spreadsheetId?: string) {
   try {
     const { range, dateCol, symbolCol, typeCol, unitsCol, priceUSDCol, valueUSDCol, fxRateCol, localCurrencyCol, brokerageCol } = iStakeSheet(ss);
 
-    const trades: Trade[] = range.getValues().map((row: any[]) => ({
-      date: new Date(row[dateCol]),
-      symbol: row[symbolCol],
-      side: row[typeCol],
-      units: parseFloat(row[unitsCol]),
-      priceUSD: parseFloat(row[priceUSDCol]),
-      valueUSD: parseFloat(row[valueUSDCol]),
-      fxRate: parseFloat(row[fxRateCol]),
-      localCurrencyValue: parseFloat(row[localCurrencyCol]),
-      brokerage: parseFloat(row[brokerageCol]),
-    }));
+    const trades: Trade[] = range.getValues().map((row: any[]) => {
+      // Normalise Side: new format uses "Buy"/"Sell", old format uses "B"/"S"
+      const rawSide = String(row[typeCol]).trim();
+      const side = rawSide === 'Buy' ? 'B' : rawSide === 'Sell' ? 'S' : rawSide as 'B' | 'S';
+
+      // Normalise FX rate: new format may have a "$" prefix, e.g. "$1.290"
+      const fxRate = parseFloat(String(row[fxRateCol]).replace('$', ''));
+
+      const valueUSD = parseFloat(row[valueUSDCol]);
+      // New format has no LOCAL CURRENCY VALUE column — derive it
+      const localCurrencyValue = localCurrencyCol >= 0 ? parseFloat(row[localCurrencyCol]) : valueUSD * fxRate;
+
+      return {
+        date: new Date(row[dateCol]),
+        symbol: String(row[symbolCol]).trim(),
+        side,
+        units: parseFloat(row[unitsCol]),
+        priceUSD: parseFloat(row[priceUSDCol]),
+        valueUSD,
+        fxRate,
+        localCurrencyValue,
+        brokerage: parseFloat(row[brokerageCol]),
+      };
+    });
 
     const CG = calculateCapitalGains(trades);
 
