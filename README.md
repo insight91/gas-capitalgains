@@ -1,28 +1,31 @@
 # Stake Capital Gains Calculator
 
-Calculates Australian capital gains tax (CGT) from [Stake](https://hellostake.com) broker trade exports. Runs as a Google Apps Script, reading a **Trades** sheet and writing results to a **Capital Gains Calc (Auto)** sheet.
+Calculates Australian capital gains tax (CGT) from [Stake](https://hellostake.com) broker trade exports. Runs as a Google Apps Script, reading a **Trades** sheet and writing results to a **Capital Gains (Generated)** sheet.
 
 ## Usage
 
-### Option A — Bound script (single spreadsheet)
+### Option A — Install as an Add-on (recommended)
 
-The script is deployed bound to a specific spreadsheet. When you open that sheet, go to **Extensions > Stake Capital Gains Calculator > Calculate CG** to run.
+Install the add-on once and use it on any of your Stake spreadsheets.
 
-### Option B — Standalone script (any spreadsheet)
+1. Install via the direct Marketplace link (see [Publishing as an Add-on](#publishing-as-an-add-on) for the link)
+2. Open any spreadsheet with a **Trades** sheet
+3. Go to **Extensions > Stake Capital Gains Calculator > Calculate CG**
 
-The script can be run against any spreadsheet without being installed into it.
+Results are written to a **Capital Gains (Generated)** sheet in the same spreadsheet.
+
+### Option B — Run directly from the script editor (no install)
+
+Useful for one-off runs without installing the add-on.
 
 1. Open the script project at [script.google.com](https://script.google.com)
-2. In the editor, open the **calculateCG4** function
-3. Call it with the target spreadsheet's ID:
+2. Call `calculateCG4` with the target spreadsheet's ID:
    ```js
    calculateCG4('your-spreadsheet-id-here');
    ```
-   The spreadsheet ID is the long string in the sheet's URL:
+   Find the spreadsheet ID in its URL:
    `https://docs.google.com/spreadsheets/d/YOUR_ID_HERE/edit`
-4. Click **Run** (you will be prompted to authorise on first run)
-
-The script will read the **Trades** sheet from that spreadsheet and write results to **Capital Gains Calc (Auto)**.
+3. Click **Run** (you will be prompted to authorise on first run)
 
 ## Trades sheet format
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Google Apps Script (GAS) project that calculates Australian capital gains tax (CGT) from Stake broker (hellostake.com) trade exports. Runs as a Google Sheets add-on, processing a "Trades" sheet and writing results to a "Capital Gains Calc (Auto)" sheet.
+Google Apps Script (GAS) project that calculates Australian capital gains tax (CGT) from Stake broker (hellostake.com) trade exports. Runs as a Google Sheets add-on, processing a "Trades" sheet and writing results to a "Capital Gains (Generated)" sheet.
 
 ## Commands
 
@@ -33,7 +33,7 @@ To deploy, you need clasp authenticated (`~/.clasprc.json`). The script ID is in
 1. `onOpen()` in [src/index.ts](src/index.ts) fires when the spreadsheet opens and calls `calculateCG4()`
 2. `iStakeSheet()` in [src/util.ts](src/util.ts) reads the "Trades" sheet, maps column indices by header name, and returns the data range + column index map
 3. `calculateCapitalGains()` in [src/capital-gains.core.ts](src/capital-gains.core.ts) iterates trades, applies FIFO matching of buys to sells, and groups results by Australian financial year (July 1–June 30) and stock symbol
-4. `calculateCG4()` in [src/capital-gains.sheet.ts](src/capital-gains.sheet.ts) calls the core function and writes rows to "Capital Gains Calc (Auto)"
+4. `calculateCG4()` in [src/capital-gains.sheet.ts](src/capital-gains.sheet.ts) calls the core function and writes rows to "Capital Gains (Generated)"
 
 **Column mapping** (`iStakeSheet`): Headers are matched by exact name — `DATE (US)`, `SYMBOL`, `SIDE`, `UNITS`, `EFFECTIVE PRICE (USD)`, `VALUE (USD)`, `FX RATE`, `LOCAL CURRENCY VALUE`, `BROKERAGE FEE (USD)`. The sheet must have these exact headers.
 

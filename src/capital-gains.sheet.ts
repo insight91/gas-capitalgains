@@ -24,7 +24,7 @@ function calculateCG4(spreadsheetId?: string) {
 
     const CG = calculateCapitalGains(trades);
 
-    const res = ss.getSheetByName('Capital Gains Calc (Auto)') ?? ss.insertSheet('Capital Gains Calc (Auto)');
+    const res = ss.getSheetByName('Capital Gains (Generated)') ?? ss.insertSheet('Capital Gains (Generated)');
     res.clear();
 
     const rows: any[][] = [];
