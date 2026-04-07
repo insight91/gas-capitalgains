@@ -6,7 +6,7 @@
   "scripts": {
     "serve": "tsc  --project tsconfig.json --watch",
     "build": "rm -rf dist && tsc  --project tsconfig.json && cp src/appsscript.json dist/ && node -e \"const fs=require('fs');fs.readdirSync('dist').filter(f=>f.endsWith('.js')).forEach(f=>{const p='dist/'+f;let c=fs.readFileSync(p,'utf8');c=c.split('\\n').filter(l=>l!=='\\\"use strict\\\";'&&!l.startsWith('Object.defineProperty(exports,')&&!l.startsWith('exports.')).join('\\n');fs.writeFileSync(p,c)})\"",
-    "publish": "clasp push",
+    "publish": "npm run build && clasp push",
     "publish:watch": "clasp push  --watch",
     "test": "jest",
     "test:watch": "jest --watch"

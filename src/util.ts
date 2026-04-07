@@ -1,5 +1,4 @@
-function iStakeSheet() {
-  const ss = SpreadsheetApp.getActive();
+function iStakeSheet(ss: GoogleAppsScript.Spreadsheet.Spreadsheet) {
   const sheet = ss.getSheetByName('Trades');
   if (!sheet) throw new Error('Sheet "Trades" not found');
 
