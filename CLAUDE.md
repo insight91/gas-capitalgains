@@ -48,7 +48,7 @@ To deploy, you need clasp authenticated (`~/.clasprc.json`). The script ID is in
 
 ## GitHub Project
 
-- Repo: `warrendodsworth/gas-capitalgains`
+- Repo: `insight91/gas-capitalgains`
 - Project board: None
 - Issues: Create issues with labels `bug`, `enhancement`, `help wanted` as needed. Issue name/title should start with the issue number #<issue_number> <issue_name>. Reference issues in PRs with "Closes #<issue_number>".
 - Scripts:
