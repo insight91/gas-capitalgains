@@ -1,9 +1,22 @@
+const TRADES_SHEET_CANDIDATES = ['Trades', 'Transactions'];
+
+function findTradesSheet(ss: GoogleAppsScript.Spreadsheet.Spreadsheet): GoogleAppsScript.Spreadsheet.Sheet {
+  // Try exact candidates first
+  for (const name of TRADES_SHEET_CANDIDATES) {
+    const s = ss.getSheetByName(name);
+    if (s) return s;
+  }
+  // Fall back to any sheet whose name starts with 'Trades' (e.g. Trades-FY25, Trades-All)
+  const fallback = ss.getSheets().find(s => s.getName().startsWith('Trades'));
+  if (fallback) return fallback;
+  throw new Error(`No trades sheet found. Expected a sheet named "Trades", "Transactions", or starting with "Trades".`);
+}
+
 function iStakeSheet(ss: GoogleAppsScript.Spreadsheet.Spreadsheet) {
-  const sheet = ss.getSheetByName('Trades');
-  if (!sheet) throw new Error('Sheet "Trades" not found');
+  const sheet = findTradesSheet(ss);
 
   const headers = sheet.getDataRange().getValues().shift();
-  if (!headers) throw new Error('Sheet "Trades" has no header row');
+  if (!headers) throw new Error(`Sheet "${sheet.getName()}" has no header row`);
 
   // get range with values
   const lastRow = sheet.getLastRow();
