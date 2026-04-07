@@ -6,7 +6,7 @@ Calculates Australian capital gains tax (CGT) from [Stake](https://hellostake.co
 
 ### Option A — Bound script (single spreadsheet)
 
-The script is deployed bound to a specific spreadsheet. When you open that sheet, a **Calculate** menu appears in the toolbar. Click **Calculate > Calculate CG** to run.
+The script is deployed bound to a specific spreadsheet. When you open that sheet, go to **Extensions > Stake Capital Gains Calculator > Calculate CG** to run.
 
 ### Option B — Standalone script (any spreadsheet)
 
