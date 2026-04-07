@@ -1,14 +1,19 @@
 const TRADES_SHEET_CANDIDATES = ['Trades', 'Transactions', 'Wall St Equities'];
 
+function isTradesSheet(name: string): boolean {
+  if (TRADES_SHEET_CANDIDATES.includes(name)) return true;
+  return name.startsWith('Trades') || name.startsWith('Wall St');
+}
+
 function findTradesSheet(ss: GoogleAppsScript.Spreadsheet.Spreadsheet): GoogleAppsScript.Spreadsheet.Sheet {
-  // Try exact candidates first
-  for (const name of TRADES_SHEET_CANDIDATES) {
-    const s = ss.getSheetByName(name);
-    if (s) return s;
-  }
-  // Fall back to any sheet whose name starts with 'Trades' or 'Wall St'
-  const fallback = ss.getSheets().find(s => s.getName().startsWith('Trades') || s.getName().startsWith('Wall St'));
-  if (fallback) return fallback;
+  // Prefer the active sheet if it looks like a trades sheet (e.g. a combined "Trades-All" sheet the user is on)
+  const active = ss.getActiveSheet();
+  if (active && isTradesSheet(active.getName())) return active;
+
+  // Otherwise search all sheets
+  const match = ss.getSheets().find(s => isTradesSheet(s.getName()));
+  if (match) return match;
+
   throw new Error(`No trades sheet found. Expected a sheet named "Trades", "Transactions", "Wall St Equities", or starting with "Trades".`);
 }
 
