@@ -20,8 +20,11 @@ function findTradesSheet(ss: GoogleAppsScript.Spreadsheet.Spreadsheet): GoogleAp
 function iStakeSheet(ss: GoogleAppsScript.Spreadsheet.Spreadsheet) {
   const sheet = findTradesSheet(ss);
 
-  const headers = sheet.getDataRange().getValues().shift();
-  if (!headers) throw new Error(`Sheet "${sheet.getName()}" has no header row`);
+  const rawHeaders = sheet.getDataRange().getValues().shift();
+  if (!rawHeaders) throw new Error(`Sheet "${sheet.getName()}" has no header row`);
+
+  // Trim each header cell to guard against leading/trailing whitespace from imports
+  const headers = (rawHeaders as any[]).map((h: any) => String(h).trim());
 
   // get range with values
   const lastRow = sheet.getLastRow();
@@ -42,6 +45,20 @@ function iStakeSheet(ss: GoogleAppsScript.Spreadsheet.Spreadsheet) {
   // New format has no LOCAL CURRENCY VALUE column — callers compute it from valueUSD * fxRate
   const localCurrencyCol = isNewFormat ? -1 : headers.indexOf('LOCAL CURRENCY VALUE');
   const brokerageCol = isNewFormat ? headers.indexOf('Fees')          : headers.indexOf('BROKERAGE FEE (USD)');
+
+  // Validate critical columns so a missing/renamed header surfaces as a clear error
+  const required: [string, number][] = [
+    [isNewFormat ? 'Trade Date' : 'DATE (US)', dateCol],
+    [isNewFormat ? 'Symbol' : 'SYMBOL', symbolCol],
+    [isNewFormat ? 'Side' : 'SIDE', typeCol],
+    [isNewFormat ? 'Units' : 'UNITS', unitsCol],
+    [isNewFormat ? 'Avg. Price' : 'EFFECTIVE PRICE (USD)', priceUSDCol],
+    [isNewFormat ? 'AUD/USD rate' : 'FX RATE', fxRateCol],
+  ];
+  const missing = required.filter(([, idx]) => idx === -1).map(([name]) => name);
+  if (missing.length > 0) {
+    throw new Error(`Sheet "${sheet.getName()}": missing column(s): ${missing.join(', ')}. Headers found: ${headers.join(' | ')}`);
+  }
 
   return { range, dateCol, symbolCol, typeCol, unitsCol, priceUSDCol, valueUSDCol, fxRateCol, localCurrencyCol, brokerageCol, isNewFormat };
 }

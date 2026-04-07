@@ -11,9 +11,9 @@ function calculateCG4(spreadsheetId?: string) {
     const { range, dateCol, symbolCol, typeCol, unitsCol, priceUSDCol, valueUSDCol, fxRateCol, localCurrencyCol, brokerageCol } = iStakeSheet(ss);
 
     const trades: Trade[] = range.getValues().map((row: any[]) => {
-      // Normalise Side: new format uses "Buy"/"Sell", old format uses "B"/"S"
-      const rawSide = String(row[typeCol]).trim();
-      const side = rawSide === 'Buy' ? 'B' : rawSide === 'Sell' ? 'S' : rawSide as 'B' | 'S';
+      // Normalise Side: new format uses "Buy"/"Sell" (any casing), old format uses "B"/"S"
+      const rawSide = String(row[typeCol]).trim().toLowerCase();
+      const side = rawSide === 'buy' ? 'B' : rawSide === 'sell' ? 'S' : rawSide.toUpperCase() as 'B' | 'S';
 
       // Normalise FX rate: new format may have a "$" prefix, e.g. "$1.290"
       const fxRate = parseFloat(String(row[fxRateCol]).replace('$', ''));
