@@ -1,5 +1,33 @@
 const TRADES_SHEET_CANDIDATES = ['Trades', 'Transactions', 'Wall St Equities'];
 
+function hasCommsecHeaders(sheet: GoogleAppsScript.Spreadsheet.Sheet): boolean {
+  const rawHeaders = sheet.getDataRange().getValues()[0] as any[];
+  if (!rawHeaders) return false;
+  const headers = rawHeaders.map((h: any) => String(h).trim());
+  return headers.includes('Code') && headers.includes('Quantity') && headers.includes('Unit Price ($)');
+}
+
+function isCommsecSheetName(name: string): boolean {
+  // CommSec exports default to "Transactions"; users may rename to "Trades-All" etc. for combined-year calcs
+  return name.includes('Transactions') || name.startsWith('Trades');
+}
+
+function findCommsecSheet(ss: GoogleAppsScript.Spreadsheet.Spreadsheet): GoogleAppsScript.Spreadsheet.Sheet {
+  // 1. Active sheet — catches the case where the user is sitting on the tab they want to process
+  const active = ss.getActiveSheet();
+  if (active && hasCommsecHeaders(active)) return active;
+
+  // 2. Sheets whose name looks like a CommSec export (by name then validate headers)
+  const byName = ss.getSheets().find(s => isCommsecSheetName(s.getName()) && hasCommsecHeaders(s));
+  if (byName) return byName;
+
+  // 3. Any sheet that has CommSec-style headers
+  const byHeaders = ss.getSheets().find(s => hasCommsecHeaders(s));
+  if (byHeaders) return byHeaders;
+
+  throw new Error(`No CommSec sheet found. Expected a sheet with columns: Code, Quantity, Unit Price ($).`);
+}
+
 function isTradesSheet(name: string): boolean {
   if (TRADES_SHEET_CANDIDATES.includes(name)) return true;
   return name.startsWith('Trades') || name.startsWith('Wall St');
@@ -61,4 +89,42 @@ function iStakeSheet(ss: GoogleAppsScript.Spreadsheet.Spreadsheet) {
   }
 
   return { range, dateCol, symbolCol, typeCol, unitsCol, priceUSDCol, valueUSDCol, fxRateCol, localCurrencyCol, brokerageCol, isNewFormat };
+}
+
+function iCommsecSheet(ss: GoogleAppsScript.Spreadsheet.Spreadsheet) {
+  const sheet = findCommsecSheet(ss);
+
+  const rawHeaders = sheet.getDataRange().getValues().shift();
+  if (!rawHeaders) throw new Error(`Sheet "${sheet.getName()}" has no header row`);
+
+  const headers = (rawHeaders as any[]).map((h: any) => String(h).trim());
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  const range = sheet.getRange(2, 1, lastRow - 1, lastCol);
+
+  // CommSec export columns: Code | Company | Date | Type | Quantity | Unit Price ($) | Trade Value ($) | Brokerage+GST ($) | GST ($) | Contract Note | Total Value ($)
+  const symbolCol   = headers.indexOf('Code');
+  const dateCol     = headers.indexOf('Date');
+  const typeCol     = headers.indexOf('Type');
+  const unitsCol    = headers.indexOf('Quantity');
+  const priceAUDCol = headers.indexOf('Unit Price ($)');
+  const valueAUDCol = headers.indexOf('Trade Value ($)');
+  const brokerageCol = headers.indexOf('Brokerage+GST ($)');
+
+  const required: [string, number][] = [
+    ['Code', symbolCol],
+    ['Date', dateCol],
+    ['Type', typeCol],
+    ['Quantity', unitsCol],
+    ['Unit Price ($)', priceAUDCol],
+    ['Trade Value ($)', valueAUDCol],
+    ['Brokerage+GST ($)', brokerageCol],
+  ];
+  const missing = required.filter(([, idx]) => idx === -1).map(([name]) => name);
+  if (missing.length > 0) {
+    throw new Error(`Sheet "${sheet.getName()}": missing column(s): ${missing.join(', ')}. Headers found: ${headers.join(' | ')}`);
+  }
+
+  return { range, symbolCol, dateCol, typeCol, unitsCol, priceAUDCol, valueAUDCol, brokerageCol };
 }
