@@ -118,45 +118,58 @@ function calculateCGStake(spreadsheetId?: string) {
   }
 }
 
+export interface CommsecColMap {
+  symbolCol: number;
+  dateCol: number;
+  typeCol: number;
+  unitsCol: number;
+  priceAUDCol: number;
+  valueAUDCol: number;
+  brokerageCol: number;
+}
+
+export function mapCommsecRows(rows: any[][], cols: CommsecColMap): Trade[] {
+  const { symbolCol, dateCol, typeCol, unitsCol, priceAUDCol, valueAUDCol, brokerageCol } = cols;
+  return rows
+    .filter((row) => String(row[symbolCol]).trim() !== '')
+    .map((row) => {
+      const rawSide = String(row[typeCol]).trim().toLowerCase();
+      const side: 'B' | 'S' = rawSide === 'buy' ? 'B' : 'S';
+
+      // CommSec dates may come in as Date objects (Sheets auto-parses) or as "DD/MM/YYYY" strings
+      let date: Date;
+      const rawDate = row[dateCol];
+      if (rawDate instanceof Date) {
+        date = rawDate;
+      } else {
+        const [day, month, year] = String(rawDate).trim().split('/');
+        date = new Date(Number(year), Number(month) - 1, Number(day));
+      }
+
+      // CommSec trades are AUD-native — treat as if fxRate = 1
+      const priceAUD = parseFloat(row[priceAUDCol]);
+      const valueAUD = parseFloat(row[valueAUDCol]);
+      const brokerage = parseFloat(row[brokerageCol]);
+
+      return {
+        date,
+        symbol: String(row[symbolCol]).trim(),
+        side,
+        units: parseFloat(row[unitsCol]),
+        priceUSD: priceAUD,       // already AUD; core multiplies by fxRate (1)
+        valueUSD: valueAUD,
+        fxRate: 1,
+        localCurrencyValue: valueAUD,
+        brokerage,
+      };
+    });
+}
+
 function calculateCGCommsec(spreadsheetId?: string) {
   const ss = spreadsheetId ? SpreadsheetApp.openById(spreadsheetId) : SpreadsheetApp.getActive();
   try {
-    const { range, symbolCol, dateCol, typeCol, unitsCol, priceAUDCol, valueAUDCol, brokerageCol } = iCommsecSheet(ss);
-
-    const trades: Trade[] = range.getValues()
-      .filter((row: any[]) => String(row[symbolCol]).trim() !== '')
-      .map((row: any[]) => {
-        const rawSide = String(row[typeCol]).trim().toLowerCase();
-        const side: 'B' | 'S' = rawSide === 'buy' ? 'B' : 'S';
-
-        // CommSec dates may come in as Date objects (Sheets auto-parses) or as "DD/MM/YYYY" strings
-        let date: Date;
-        const rawDate = row[dateCol];
-        if (rawDate instanceof Date) {
-          date = rawDate;
-        } else {
-          const [day, month, year] = String(rawDate).trim().split('/');
-          date = new Date(Number(year), Number(month) - 1, Number(day));
-        }
-
-        // CommSec trades are AUD-native — treat as if fxRate = 1
-        const priceAUD = parseFloat(row[priceAUDCol]);
-        const valueAUD = parseFloat(row[valueAUDCol]);
-        const brokerage = parseFloat(row[brokerageCol]);
-
-        return {
-          date,
-          symbol: String(row[symbolCol]).trim(),
-          side,
-          units: parseFloat(row[unitsCol]),
-          priceUSD: priceAUD,       // already AUD; core multiplies by fxRate (1)
-          valueUSD: valueAUD,
-          fxRate: 1,
-          localCurrencyValue: valueAUD,
-          brokerage,
-        };
-      });
-
+    const cols = iCommsecSheet(ss);
+    const trades = mapCommsecRows(cols.range.getValues(), cols);
     writeCGResults(ss, calculateCapitalGains(trades));
   } catch (e: any) {
     SpreadsheetApp.getActiveSpreadsheet()?.toast(e?.message ?? 'An unexpected error occurred.', 'Capital Gains Error', 10);
