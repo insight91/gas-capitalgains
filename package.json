@@ -6,8 +6,10 @@
   "scripts": {
     "serve": "tsc  --project tsconfig.json --watch",
     "build": "rm -rf dist && tsc --project tsconfig.json && cp src/appsscript.json dist/ && node scripts/strip-gas-boilerplate.js",
-    "publish": "npm run build && clasp push",
-    "publish:watch": "clasp push  --watch",
+    "publish:all": "npm run build && clasp push --force --project .clasp-stake.json && clasp push --force --project .clasp-commsec.json",
+    "publish:stake": "npm run build && clasp push --force --project .clasp-stake.json",
+    "publish:commsec": "npm run build && clasp push --force --project .clasp-commsec.json",
+    "publish:stake:watch": "clasp push --watch --force --project .clasp-stake.json",
     "test": "jest",
     "test:watch": "jest --watch"
   },
